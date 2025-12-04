@@ -1,1 +1,4 @@
 /target
+.env
+input.txt
+devenv.nix
