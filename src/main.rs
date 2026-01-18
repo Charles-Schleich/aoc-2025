@@ -1,8 +1,18 @@
+// rust
+use std::fs;
+
+
+// 3rd party
+
+// internal
+mod input;
+
 
 struct MyNum(u8);
 
+
+
 impl MyNum {
-    // const RANGE: Range:
 
     fn new(val:u8) -> Self {
         Self(val)
@@ -23,6 +33,9 @@ impl MyNum {
     }
 }
 
+
+
 fn main() {
-    println!("Hello, world!");
+
+
 }
