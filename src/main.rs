@@ -1,19 +1,11 @@
 // rust
-use std::fs;
-
-
+use std::{fs, path::PathBuf};
 // 3rd party
-
 // internal
 mod input;
-
-
 struct MyNum(u8);
-
-
-
+// 
 impl MyNum {
-
     fn new(val:u8) -> Self {
         Self(val)
     }
@@ -33,9 +25,9 @@ impl MyNum {
     }
 }
 
-
-
 fn main() {
+    let turns_or_err= input::read_lines_parse_to_turn(PathBuf::from("./input.txt"));
+    println!("truns or Err {:?}",turns_or_err);
 
 
 }

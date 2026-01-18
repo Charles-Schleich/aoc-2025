@@ -2,7 +2,7 @@ use std::{fs, num::ParseIntError, path::PathBuf};
 use thiserror::Error;
 
 //
-// pub enum ReadError <T>  
+// pub enum ReadError <T>
 // where T:std::fmt::Debug {
 
 #[derive(Error, Debug)]
@@ -33,49 +33,44 @@ enum Day1Error {
     #[error("Not Left or Right")]
     NotLeftOrRight,
     #[error("Empty Line")]
-    EmptyLine
+    EmptyLine,
 }
 
-// 
-struct Turn {
-    direction: Direction,
-    amount: u8
+
+type TurnMax = u16;
+#[derive(Debug)]
+pub struct Turn {
+    pub direction: Direction,
+    pub amount: TurnMax,
 }
 
-// 
-enum Direction {
+#[derive(Debug)]
+pub enum Direction {
     Left,
-    Right
+    Right,
 }
+// 
+type TurnsOrError = Result<Vec<Turn>,ReadError>;
 
-pub fn read_return_separated_ints(file_path: PathBuf) -> Result<String, ReadError> {
-
-    let x = fs::read_to_string(file_path)?
-        .lines()
-        .into_iter()
+pub fn read_lines_parse_to_turn(file_path: PathBuf) -> TurnsOrError {
+    fs::read_to_string(file_path)?
+        .lines() //
+        .into_iter() //
         .map(|x| {
-            
             let (head_str, tail) = x.split_at(1);
             let head = head_str.chars().next();
 
-            match (tail.parse::<u8>(),head) {
-                (_, None) =>{ Err(ReadError::from(Day1Error::NotLeftOrRight))},
-                (Err(e),_) =>Err(ReadError::from(e)),
-                (Ok(amount), Some(head)) =>{
-                    let direction = match head {
-                        'L' => Direction::Left,
-                        'R' => Direction::Right,
-                    };
-                    Ok(Turn {
-                            amount ,
-                            direction: Direction::Left,
-                    })
-                },
+            match (tail.parse::<TurnMax>(), head) {
+                (_, None) => Err(ReadError::from(Day1Error::EmptyLine)),
+                (Err(e), _) => Err(ReadError::from(e)),
+                (Ok(amount), Some(head)) => match head {
+                    'L' => Ok(Direction::Left),
+                    'R' => Ok(Direction::Right),
+                    _ => Err(ReadError::from(Day1Error::NotLeftOrRight)),
+                }
+                .map(|direction| Turn { amount, direction }),
             }
-        }
-     )
-        
+        })// Iter<Result<Turn, ReadError>>
+        .collect::<TurnsOrError>()
 
-    // 
-    Err(ReadError::Unknown)
 }
