@@ -1,5 +1,5 @@
 // rust
-use std::{path::PathBuf};
+use std::path::PathBuf;
 // 3rd party
 
 // internal
@@ -29,6 +29,11 @@ impl MyNum {
 
 fn main() {
     let turns_or_err = day1::read_lines_parse_to_turn(PathBuf::from("./input.txt"));
-    println!("truns or Err {:?}",turns_or_err);
+    println!("turns or Err {:?}",turns_or_err);
+    // 
+    for turn in turns_or_err.unwrap() {
+        println!("{:?},{:?}",turn.amount,turn.direction);
+    }
+    
 
 }

@@ -1,5 +1,7 @@
-use std::{fs, num::ParseIntError, path::PathBuf};
+use std::{fs, path::PathBuf};
 use thiserror::Error;
+
+use crate::input::ReadError;
 
 #[derive(Error, Debug)]
 pub enum Day1Error {
@@ -8,7 +10,6 @@ pub enum Day1Error {
     #[error("Empty Line")]
     EmptyLine,
 }
-
 
 type TurnMax = u16;
 #[derive(Debug)]
