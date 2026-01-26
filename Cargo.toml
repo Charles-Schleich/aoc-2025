@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 thiserror = "2.0.17"
-
+enumerable = "1.2.0"
+seq-macro = "0.3.6"
