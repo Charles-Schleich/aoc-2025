@@ -120,7 +120,7 @@ pub enum Direction {
     Left,
     Right,
 }
-//
+
 type TurnsOrError = Result<Vec<Turn>, ReadError>;
 
 fn read_lines_parse_to_turn(file_path: PathBuf) -> TurnsOrError {
