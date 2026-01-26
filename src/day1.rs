@@ -19,62 +19,77 @@ use thiserror::Error;
 
 // lock!(0,99);
 // lock!(start,end);
-macro_rules! lock {
-    ( $start:expr,$end:expr ) => {
-        // enum Lock {
-        // }
-        // for i in $start..$end{
-        //     println!("{}",i);
-        // }
-    };
-}
+// macro_rules! lock {
+//     ( $start:expr,$end:expr ) => {
+// enum Lock {
+// }
+// for i in $start..$end{
+//     println!("{}",i);
+// }
+//     };
+// }
 
-seq!(N in 0..=5 {
+seq!(N in 0..=99 {
     #[derive(Debug,Clone,Copy)]
     // Expands to _64, _65, ...
     pub enum Lock {
-        #(_~N,)*
+        #(Var~N,)*
     }
 
-    impl Iterator for Lock {
-        type Item = Lock;
-        fn next(&mut self) -> Option<Self::Item> {
-            match self{
-                Lock::_0 => Some(Lock::_1),
-                Lock::_1 => Some(Lock::_2),
-                Lock::_2 => Some(Lock::_3),
-                Lock::_3 => Some(Lock::_4),
-                Lock::_4 => Some(Lock::_5),
-                Lock::_5 => Some(Lock::_0),
-            }
-        }
-    }
+    // ITERATOR DOUBLE ENDED APPROACH
+    // impl Iterator for Lock {
+    //     type Item = Lock;
+    //     fn next(&mut self) -> Option<Self::Item> {
+    //         match self{
+    //             #(_~N,)*
+    //             Lock::_~N =>Lock::_~N+1,
+    //             //   #()* =>#(Lock::_~N+1)*
+    //             // Lock::_0 => Some(Lock::_1),
+    //             // Lock::_0 => Some(Lock::_1),
+    //             // Lock::_1 => Some(Lock::_2),
+    //             // Lock::_2 => Some(Lock::_3),
+    //             // Lock::_3 => Some(Lock::_4),
+    //             // Lock::_4 => Some(Lock::_5),
+    //             // Lock::_5 => Some(Lock::_0),
+    //         }
+    //     }
+    // }
 
-    impl DoubleEndedIterator for Lock {
-        fn next_back(&mut self) -> Option<Self::Item> {
-            match  self{
-                Lock::_0 => Some(Lock::_1),
-                Lock::_1 => Some(Lock::_2),
-                Lock::_2 => Some(Lock::_3),
-                Lock::_3 => Some(Lock::_4),
-                Lock::_4 => Some(Lock::_5),
-                Lock::_5 => Some(Lock::_0),
-            }
-        }
-    }
+    // impl DoubleEndedIterator for Lock {
+    //     fn next_back(&mut self) -> Option<Self::Item> {
+    //         match  self{
+    //             Lock::_0 => Some(Lock::_1),
+    //             Lock::_1 => Some(Lock::_2),
+    //             Lock::_2 => Some(Lock::_3),
+    //             Lock::_3 => Some(Lock::_4),
+    //             Lock::_4 => Some(Lock::_5),
+    //             Lock::_5 => Some(Lock::_0),
+    //         }
+    //     }
+    // }
+
+    // MACRO RULES APPROACH
+    // macro_rules! next_enum {
+    //     ($($current:ident => $next:ident),* $(,)?) => {
+    //         impl Lock {
+    //             pub fn next(&self) -> Self {
+    //                 match self {
+    //                     $(Lock::$current => Lock::$next),*,
+    //                 }
+    //             }
+    //         }
+    //     };
+    // }
+
+    // next_enum! {
+    //     Var0 => Var1,
+    //     Var1 => Var2,
+    //     Var2 => Var3,
+    //     Var3 => Var4,
+    //     Var98 => Var99,
+    //     Var99 => Var0, // Wrap around
+    // }
 });
-
-impl Enumerable for Lock {
-    // type Enumerator: Iterator<Item = Self>;
-    // type Enumerator : Iterator<Item = Lock>
-    type Enumerator = Lock; // 
-    // type Enumerator = DoubleEndedIterator<Item = Lock>;
-    const ENUMERABLE_SIZE_OPTION: Option<usize> = Some(5);
-
-    fn enumerator() -> Self::Enumerator {
-        todo!()
-    }
-}
 
 #[derive(Error, Debug)]
 pub enum Day1Error {
@@ -99,7 +114,7 @@ pub enum Direction {
 //
 type TurnsOrError = Result<Vec<Turn>, ReadError>;
 
-pub fn read_lines_parse_to_turn(file_path: PathBuf) -> TurnsOrError {
+fn read_lines_parse_to_turn(file_path: PathBuf) -> TurnsOrError {
     fs::read_to_string(file_path)?
         .lines() //
         .into_iter() //
@@ -119,4 +134,103 @@ pub fn read_lines_parse_to_turn(file_path: PathBuf) -> TurnsOrError {
             }
         }) // Iter<Result<Turn, ReadError>>
         .collect::<TurnsOrError>()
+}
+
+struct Dial(u8);
+
+// The dial starts by pointing at 50.
+impl Dial {
+    fn new() -> Self {
+        Self(50)
+    }
+    fn val(&self) -> u8 {
+        self.0
+    }
+
+    // decrease : 11 + L8 = 3
+    fn left(&mut self, mut val: u16) {
+        // continue subtracting 99 until val is less than 99
+        while val > 0 {
+            val = val - 1;
+
+            // wrap
+            if self.0 == 0 {
+                self.0 = 99;
+            } else {
+                self.0 = self.0 - 1;
+            }
+        }
+    }
+
+    // increase : 11 + R8 = 19
+    fn right(&mut self, mut val: u16) {
+        // continue subtracting 99 until val is less than 99
+        while val > 0 {
+            val = val - 1;
+            // wrap
+            if self.0 == 99 {
+                self.0 = 0;
+            } else {
+                self.0 = self.0 + 1;
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_add() {
+        let turns = vec![
+            Turn {
+                direction: Direction::Left,
+                amount: 10,
+            }, //40
+            Turn {
+                direction: Direction::Left,
+                amount: 10,
+            }, //30
+            Turn {
+                direction: Direction::Right,
+                amount: 10,
+            }, //40
+        ];
+        
+        let mut dial = Dial::new();
+        let expected_dial_values = vec![40,30,40];
+        let mut actual_dial_values = Vec::new();
+        for turn in turns {
+             match turn.direction {
+                Direction::Left => dial.left(turn.amount),
+                Direction::Right => dial.right(turn.amount),
+            }
+            actual_dial_values.push(dial.val());
+         }
+         assert_eq!(expected_dial_values,actual_dial_values)
+    }
+}
+
+pub fn day1() {
+    //
+    let turns_or_err = read_lines_parse_to_turn(PathBuf::from("./input.txt")).unwrap();
+    println!("turns or Err {:?}", turns_or_err.len());
+
+    let mut dial = Dial::new();
+    let mut count = 0;
+    for turn in turns_or_err {
+        // for turn in turns.unwrap() {
+        // println!("{:?},{:?}", turn.amount, turn.direction);
+        match turn.direction {
+            Direction::Left => dial.left(turn.amount),
+            Direction::Right => dial.right(turn.amount),
+        }
+        if dial.val() == 0 {
+            count = count + 1;
+        };
+        // println!("=== Dial {:?}", dial.val());
+    }
+    println!("{}", count);
 }
