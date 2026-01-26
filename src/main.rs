@@ -7,8 +7,6 @@ mod input;
 #[macro_use]
 mod day1;
 
-
 fn main() {
     day1()
-
 }

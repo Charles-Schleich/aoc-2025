@@ -1,7 +1,7 @@
 use std::num::ParseIntError;
 use thiserror::Error;
 
-// 
+//
 use super::day1::Day1Error;
 
 //

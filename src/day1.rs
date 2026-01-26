@@ -106,6 +106,15 @@ pub struct Turn {
     pub amount: TurnMax,
 }
 
+impl Turn {
+    fn new(d: Direction, tm: TurnMax) -> Self {
+        Self {
+            direction: d,
+            amount: tm,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Direction {
     Left,
@@ -138,7 +147,8 @@ fn read_lines_parse_to_turn(file_path: PathBuf) -> TurnsOrError {
 
 struct Dial {
     current: u8,
-    clicks_past_zero: u16,
+    clicks_at_zero: u16,
+    // starting_on_zero: u16,
 }
 
 // The dial starts by pointing at 50.
@@ -146,11 +156,18 @@ impl Dial {
     fn new() -> Self {
         Self {
             current: 50,
-            clicks_past_zero: 0,
+            clicks_at_zero: 0,
         }
     }
     fn val(&self) -> u8 {
         self.current
+    }
+
+    pub fn turn(&mut self, turn: Turn) {
+        match turn.direction {
+            Direction::Left => self.left(turn.amount),
+            Direction::Right => self.right(turn.amount),
+        }
     }
 
     // decrease : 11 + L8 = 3
@@ -162,9 +179,12 @@ impl Dial {
             // wrap
             if self.current == 0 {
                 self.current = 99;
-                self.clicks_past_zero += 1;
             } else {
                 self.current = self.current - 1;
+            }
+
+            if self.current == 0 {
+                self.clicks_at_zero += 1;
             }
         }
     }
@@ -177,9 +197,12 @@ impl Dial {
             // wrap
             if self.current == 99 {
                 self.current = 0;
-                self.clicks_past_zero += 1;
             } else {
                 self.current = self.current + 1;
+            }
+
+            if self.current == 0 {
+                self.clicks_at_zero += 1;
             }
         }
     }
@@ -193,20 +216,15 @@ pub fn day1() {
     let mut dial = Dial::new();
     let mut count = 0;
     for turn in turns_or_err {
-        match turn.direction {
-            Direction::Left => dial.left(turn.amount),
-            Direction::Right => dial.right(turn.amount),
-        }
+        dial.turn(turn);
         if dial.val() == 0 {
             count = count + 1;
         };
     }
 
-    println!("Part 1: Ended on zero {}", count);
-    println!("Part 2: Clicks past   {}", dial.clicks_past_zero);
-    println!("ended + Clicks past   {}", count + dial.clicks_past_zero);
+    println!("Part 1: Ended on zero    {}", count);
+    println!("Part 2: Clicks past zero {}", dial.clicks_at_zero);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////
 #[cfg(test)]
@@ -215,30 +233,32 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_count_start_50_l1000() {
+        let turns = vec![
+            Turn::new(Direction::Left, 1000), //40
+        ];
+
+        let mut dial = Dial::new();
+        for turn in turns {
+            dial.turn(turn);
+        }
+
+        assert_eq!(dial.clicks_at_zero, 10)
+    }
+
+    #[test]
     fn test_add() {
         let turns = vec![
-            Turn {
-                direction: Direction::Left,
-                amount: 10,
-            }, //40
-            Turn {
-                direction: Direction::Left,
-                amount: 10,
-            }, //30
-            Turn {
-                direction: Direction::Right,
-                amount: 10,
-            }, //40
+            Turn::new(Direction::Left, 10),  //40
+            Turn::new(Direction::Left, 10),  //40
+            Turn::new(Direction::Right, 10), //40
         ];
 
         let mut dial = Dial::new();
         let expected_dial_values = vec![40, 30, 40];
         let mut actual_dial_values = Vec::new();
         for turn in turns {
-            match turn.direction {
-                Direction::Left => dial.left(turn.amount),
-                Direction::Right => dial.right(turn.amount),
-            }
+            dial.turn(turn);
             actual_dial_values.push(dial.val());
         }
         assert_eq!(expected_dial_values, actual_dial_values)
