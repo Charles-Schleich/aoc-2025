@@ -136,15 +136,21 @@ fn read_lines_parse_to_turn(file_path: PathBuf) -> TurnsOrError {
         .collect::<TurnsOrError>()
 }
 
-struct Dial(u8);
+struct Dial {
+    current: u8,
+    clicks_past_zero: u16,
+}
 
 // The dial starts by pointing at 50.
 impl Dial {
     fn new() -> Self {
-        Self(50)
+        Self {
+            current: 50,
+            clicks_past_zero: 0,
+        }
     }
     fn val(&self) -> u8 {
-        self.0
+        self.current
     }
 
     // decrease : 11 + L8 = 3
@@ -154,10 +160,11 @@ impl Dial {
             val = val - 1;
 
             // wrap
-            if self.0 == 0 {
-                self.0 = 99;
+            if self.current == 0 {
+                self.current = 99;
+                self.clicks_past_zero += 1;
             } else {
-                self.0 = self.0 - 1;
+                self.current = self.current - 1;
             }
         }
     }
@@ -168,15 +175,40 @@ impl Dial {
         while val > 0 {
             val = val - 1;
             // wrap
-            if self.0 == 99 {
-                self.0 = 0;
+            if self.current == 99 {
+                self.current = 0;
+                self.clicks_past_zero += 1;
             } else {
-                self.0 = self.0 + 1;
+                self.current = self.current + 1;
             }
         }
     }
 }
 
+pub fn day1() {
+    //
+    let turns_or_err = read_lines_parse_to_turn(PathBuf::from("./input.txt")).unwrap();
+    println!("turns or Err {:?}", turns_or_err.len());
+
+    let mut dial = Dial::new();
+    let mut count = 0;
+    for turn in turns_or_err {
+        match turn.direction {
+            Direction::Left => dial.left(turn.amount),
+            Direction::Right => dial.right(turn.amount),
+        }
+        if dial.val() == 0 {
+            count = count + 1;
+        };
+    }
+
+    println!("Part 1: Ended on zero {}", count);
+    println!("Part 2: Clicks past   {}", dial.clicks_past_zero);
+    println!("ended + Clicks past   {}", count + dial.clicks_past_zero);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////
 #[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
@@ -198,39 +230,17 @@ mod tests {
                 amount: 10,
             }, //40
         ];
-        
+
         let mut dial = Dial::new();
-        let expected_dial_values = vec![40,30,40];
+        let expected_dial_values = vec![40, 30, 40];
         let mut actual_dial_values = Vec::new();
         for turn in turns {
-             match turn.direction {
+            match turn.direction {
                 Direction::Left => dial.left(turn.amount),
                 Direction::Right => dial.right(turn.amount),
             }
             actual_dial_values.push(dial.val());
-         }
-         assert_eq!(expected_dial_values,actual_dial_values)
-    }
-}
-
-pub fn day1() {
-    //
-    let turns_or_err = read_lines_parse_to_turn(PathBuf::from("./input.txt")).unwrap();
-    println!("turns or Err {:?}", turns_or_err.len());
-
-    let mut dial = Dial::new();
-    let mut count = 0;
-    for turn in turns_or_err {
-        // for turn in turns.unwrap() {
-        // println!("{:?},{:?}", turn.amount, turn.direction);
-        match turn.direction {
-            Direction::Left => dial.left(turn.amount),
-            Direction::Right => dial.right(turn.amount),
         }
-        if dial.val() == 0 {
-            count = count + 1;
-        };
-        // println!("=== Dial {:?}", dial.val());
+        assert_eq!(expected_dial_values, actual_dial_values)
     }
-    println!("{}", count);
 }
